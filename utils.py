@@ -1,5 +1,9 @@
 import copy
 import networkx as nx
+
+
+
+
 def argmax(d):
     """ a) create a list of the dict's keys and values; 
         b) return the key with the max value"""  
@@ -129,6 +133,67 @@ def analysis(G, C, w):
         count += 1
     
     return count
+
+def get_max_val_from_nodes(G, nodes):
+    valuations = dict(G.nodes(data='valuation'))
+    vals = {i: valuations[i] for i in nodes}
+    return max(vals.values())
+
+
+def get_payments(G, C, w):
+    # G: graph
+    # C: critical nodes (list of ints)
+    # w: winner (int)
+    p = {}
+    dt = get_dt(G)
+    order = sorted([i for i in dt if i in C], key=lambda x: dt[x])
+
+    for i in range(len(order) - 1):
+
+        to = order[i]
+        frm = order[i+1]
+        nodes_left = get_minus_di(frm, G)
+        p[(frm, to)] = get_max_val_from_nodes(G, nodes_left)
+
+    return p
+
+
+def get_allocation(G, C, p):
+    a = {}
+    dt = get_dt(G)
+    valuations = dict(G.nodes(data='valuation'))
+    order = sorted([i for i in dt if i in C], key=lambda x: dt[x])
+    
+    for i in range(len(order)):
+
+        to = order[i]
+        try:
+            frm = order[i+1]
+        except:
+            a[to] = 1
+            return a
+        
+        if p[(frm, to)] == valuations[to]:
+            a[to] = 1
+            return a
+        else:
+            a[to] = 0   
+    return a
+
+
+
+def get_final_payments(G, C, a, p):
+    final_p = {}
+    dt = get_dt(G)
+    order = sorted([i for i in dt if i in C], key=lambda x: dt[x])
+    for i in range(len(order)-1):
+        to = order[i]
+        frm = order[i+1]
+        if a[to] == 1:
+            break
+        final_p[(frm, to)] = p[(frm, to)]
+        
+    return final_p
 
 # def get_C(G, valuations):
 #     C = [0]
